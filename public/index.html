@@ -830,6 +830,16 @@
       .highlight-share {
         padding: 0.4rem 0.35rem;
       }
+      .highlight-share::after {
+        bottom: auto;
+        top: -6px;
+        border-top: none;
+        border-bottom: 7px solid #2d2927;
+      }
+      .hs-copied {
+        top: auto;
+        bottom: -28px;
+      }
       .hs-btn {
         width: 40px;
         height: 40px;
@@ -1271,19 +1281,26 @@
       return cleaned.substring(0, max - 1) + '\u2026';
     }
 
+    const ATTRIBUTION = '\u2014 Blueprint for Renewal, Mere Orthodoxy';
+
     function buildQuoteText(quote) {
-      return '\u201c' + quote + '\u201d';
+      return '\u201c' + quote + '\u201d\n\n' + ATTRIBUTION;
     }
 
     function positionTooltip(range) {
       const rect = range.getBoundingClientRect();
       const tooltipWidth = hsTooltip.offsetWidth || 200;
+      const isMobile = window.innerWidth <= 960;
       const x = rect.left + rect.width / 2;
-      const y = rect.top + window.scrollY - 10;
-      // Clamp so tooltip doesn't overflow viewport edges
       const clampedX = Math.max(tooltipWidth / 2 + 8, Math.min(x, window.innerWidth - tooltipWidth / 2 - 8));
       hsTooltip.style.left = clampedX + 'px';
-      hsTooltip.style.top = y + 'px';
+      if (isMobile) {
+        // Below selection on mobile so it doesn't cover text
+        hsTooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+      } else {
+        // Above selection on desktop
+        hsTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
+      }
     }
 
     function hideTooltip() {
@@ -1338,9 +1355,9 @@
       window.open('sms:?&body=' + encodeURIComponent(quote + '\n\n' + SHARE_URL));
     });
 
-    // X with quote (280 char limit minus URL)
+    // X with quote
     document.getElementById('hsX').addEventListener('click', () => {
-      const quote = buildQuoteText(truncateQuote(selectedQuote, 200));
+      const quote = '\u201c' + truncateQuote(selectedQuote, 180) + '\u201d\n\n' + ATTRIBUTION;
       window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(quote) + '&url=' + encodeURIComponent(SHARE_URL), '_blank');
     });
 
