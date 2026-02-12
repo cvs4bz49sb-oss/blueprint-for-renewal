@@ -7,7 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/api/pdf", async (req, res) => {
+// PDF generation helper
+async function generatePdf(pageUrl, filename, res) {
   let browser;
   try {
     browser = await puppeteer.launch({
@@ -16,7 +17,7 @@ app.get("/api/pdf", async (req, res) => {
     });
     const page = await browser.newPage();
 
-    await page.goto(`http://localhost:${PORT}/?print=true`, {
+    await page.goto(pageUrl, {
       waitUntil: "networkidle0",
       timeout: 30000,
     });
@@ -34,7 +35,7 @@ app.get("/api/pdf", async (req, res) => {
     const pdfBuffer = Buffer.from(pdfData);
     res.set({
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="blueprint-for-renewal.pdf"',
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Content-Length": pdfBuffer.length,
     });
     res.end(pdfBuffer);
@@ -44,6 +45,29 @@ app.get("/api/pdf", async (req, res) => {
   } finally {
     if (browser) await browser.close();
   }
+}
+
+// Blueprint for Renewal PDF
+app.get("/api/pdf", (req, res) => {
+  generatePdf(
+    `http://localhost:${PORT}/?print=true`,
+    "blueprint-for-renewal.pdf",
+    res
+  );
+});
+
+// Spiritual Formation PDF
+app.get("/api/pdf/spiritual-formation", (req, res) => {
+  generatePdf(
+    `http://localhost:${PORT}/spiritual-formation.html?print=true`,
+    "spiritual-formation-for-the-family.pdf",
+    res
+  );
+});
+
+// Spiritual Formation page
+app.get("/spiritual-formation", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "spiritual-formation.html"));
 });
 
 app.get("*", (req, res) => {
