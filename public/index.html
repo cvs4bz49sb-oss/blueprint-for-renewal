@@ -738,6 +738,93 @@
       border-bottom-color: #000000;
     }
 
+    /* ===== Highlight & Share Tooltip ===== */
+    .highlight-share {
+      display: none;
+      position: absolute;
+      z-index: 300;
+      background-color: #2d2927;
+      border-radius: 6px;
+      padding: 0.35rem 0.25rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      gap: 0.1rem;
+      align-items: center;
+      transform: translateX(-50%);
+    }
+
+    .highlight-share.visible {
+      display: flex;
+    }
+
+    .highlight-share::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 7px solid #2d2927;
+    }
+
+    .hs-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #e8ddd0;
+      transition: background-color 0.15s ease;
+      padding: 0;
+    }
+
+    .hs-btn:hover {
+      background-color: rgba(255,255,255,0.12);
+    }
+
+    .hs-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .hs-divider {
+      width: 1px;
+      height: 20px;
+      background-color: rgba(255,255,255,0.2);
+      margin: 0 0.15rem;
+    }
+
+    .hs-copied {
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #2d2927;
+      color: #e8ddd0;
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .hs-copied.show {
+      opacity: 1;
+    }
+
+    body.print-mode .highlight-share {
+      display: none !important;
+    }
+
     /* ===== Scroll Progress ===== */
     .progress-bar {
       position: fixed;
@@ -752,6 +839,27 @@
   </style>
 </head>
 <body>
+  <!-- Highlight & Share Tooltip -->
+  <div class="highlight-share" id="highlightShare">
+    <span class="hs-copied" id="hsCopied">Copied!</span>
+    <button class="hs-btn" id="hsCopy" title="Copy quote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    </button>
+    <button class="hs-btn" id="hsSMS" title="Text message">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <div class="hs-divider"></div>
+    <button class="hs-btn" id="hsX" title="Share on X">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </button>
+    <button class="hs-btn" id="hsFB" title="Share on Facebook">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    </button>
+    <button class="hs-btn" id="hsIG" title="Instagram Stories">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+    </button>
+  </div>
+
   <!-- Reading Progress -->
   <div class="progress-bar" id="progressBar"></div>
 
@@ -1130,6 +1238,93 @@
         msg.textContent = 'Link copied! Paste it in your Story.';
         msg.classList.add('show');
         setTimeout(() => { msg.classList.remove('show'); msg.textContent = 'Link copied!'; }, 4000);
+      });
+    });
+
+    // ===== Highlight & Share =====
+    const hsTooltip = document.getElementById('highlightShare');
+    const hsCopiedMsg = document.getElementById('hsCopied');
+    let selectedQuote = '';
+
+    function truncateQuote(text, max) {
+      const cleaned = text.replace(/\s+/g, ' ').trim();
+      if (cleaned.length <= max) return cleaned;
+      return cleaned.substring(0, max - 1) + '\u2026';
+    }
+
+    function buildQuoteText(quote) {
+      return '\u201c' + quote + '\u201d';
+    }
+
+    function positionTooltip(range) {
+      const rect = range.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + window.scrollY - 10;
+      hsTooltip.style.left = Math.max(30, Math.min(x, window.innerWidth - 30)) + 'px';
+      hsTooltip.style.top = y + 'px';
+    }
+
+    function hideTooltip() {
+      hsTooltip.classList.remove('visible');
+      selectedQuote = '';
+    }
+
+    document.addEventListener('mouseup', (e) => {
+      if (hsTooltip.contains(e.target)) return;
+      setTimeout(() => {
+        const sel = window.getSelection();
+        const text = sel ? sel.toString().trim() : '';
+        if (text.length > 3 && document.querySelector('.main-content').contains(sel.anchorNode)) {
+          selectedQuote = text;
+          positionTooltip(sel.getRangeAt(0));
+          hsTooltip.classList.add('visible');
+        } else {
+          hideTooltip();
+        }
+      }, 10);
+    });
+
+    document.addEventListener('mousedown', (e) => {
+      if (!hsTooltip.contains(e.target)) {
+        hideTooltip();
+      }
+    });
+
+    // Copy quote + link
+    document.getElementById('hsCopy').addEventListener('click', () => {
+      const quote = buildQuoteText(selectedQuote);
+      navigator.clipboard.writeText(quote + '\n\n' + SHARE_URL).then(() => {
+        hsCopiedMsg.classList.add('show');
+        setTimeout(() => hsCopiedMsg.classList.remove('show'), 1500);
+      });
+    });
+
+    // SMS with quote
+    document.getElementById('hsSMS').addEventListener('click', () => {
+      const quote = buildQuoteText(truncateQuote(selectedQuote, 200));
+      window.open('sms:?&body=' + encodeURIComponent(quote + '\n\n' + SHARE_URL));
+    });
+
+    // X with quote (280 char limit minus URL)
+    document.getElementById('hsX').addEventListener('click', () => {
+      const quote = buildQuoteText(truncateQuote(selectedQuote, 200));
+      window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(quote) + '&url=' + encodeURIComponent(SHARE_URL), '_blank');
+    });
+
+    // Facebook
+    document.getElementById('hsFB').addEventListener('click', () => {
+      const quote = buildQuoteText(truncateQuote(selectedQuote, 300));
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL) + '&quote=' + encodeURIComponent(quote), '_blank');
+    });
+
+    // Instagram Stories
+    document.getElementById('hsIG').addEventListener('click', () => {
+      const quote = buildQuoteText(selectedQuote);
+      navigator.clipboard.writeText(quote + '\n\n' + SHARE_URL).then(() => {
+        window.open('https://www.instagram.com/create/story/', '_blank');
+        hsCopiedMsg.textContent = 'Quote + link copied! Paste in your Story.';
+        hsCopiedMsg.classList.add('show');
+        setTimeout(() => { hsCopiedMsg.classList.remove('show'); hsCopiedMsg.textContent = 'Copied!'; }, 4000);
       });
     });
   </script>
