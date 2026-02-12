@@ -1275,16 +1275,22 @@
     const hsCopiedMsg = document.getElementById('hsCopied');
     let selectedQuote = '';
 
-    function truncateQuote(text, max) {
-      const cleaned = text.replace(/\s+/g, ' ').trim();
-      if (cleaned.length <= max) return cleaned;
-      return cleaned.substring(0, max - 1) + '\u2026';
-    }
+    // Build share text with graceful attribution trimming for character limits.
+    // When there's a limit: first drop "Mere Orthodoxy", then "Blueprint for Renewal",
+    // then it's just the quote + link with no attribution.
+    // When there's no limit (0), always include full attribution.
+    function buildShareText(rawQuote, limit) {
+      const quote = rawQuote.replace(/\s+/g, ' ').trim();
+      const wrapped = '\u201c' + quote + '\u201d';
+      const attrFull = '\n\n\u2014 Blueprint for Renewal, Mere Orthodoxy';
+      const attrShort = '\n\n\u2014 Blueprint for Renewal';
+      const attrNone = '';
 
-    const ATTRIBUTION = '\u2014 Blueprint for Renewal, Mere Orthodoxy';
+      if (!limit) return wrapped + attrFull;
 
-    function buildQuoteText(quote) {
-      return '\u201c' + quote + '\u201d\n\n' + ATTRIBUTION;
+      if ((wrapped + attrFull).length <= limit) return wrapped + attrFull;
+      if ((wrapped + attrShort).length <= limit) return wrapped + attrShort;
+      return wrapped + attrNone;
     }
 
     function positionTooltip(range) {
@@ -1340,37 +1346,37 @@
       selectionChangeTimer = setTimeout(checkSelection, 300);
     });
 
-    // Copy quote + link
+    // Copy quote + link (no limit)
     document.getElementById('hsCopy').addEventListener('click', () => {
-      const quote = buildQuoteText(selectedQuote);
-      navigator.clipboard.writeText(quote + '\n\n' + SHARE_URL).then(() => {
+      const text = buildShareText(selectedQuote, 0) + '\n\n' + SHARE_URL;
+      navigator.clipboard.writeText(text).then(() => {
         hsCopiedMsg.classList.add('show');
         setTimeout(() => hsCopiedMsg.classList.remove('show'), 1500);
       });
     });
 
-    // SMS with quote
+    // SMS with quote (no hard limit)
     document.getElementById('hsSMS').addEventListener('click', () => {
-      const quote = buildQuoteText(truncateQuote(selectedQuote, 200));
-      window.open('sms:?&body=' + encodeURIComponent(quote + '\n\n' + SHARE_URL));
+      const text = buildShareText(selectedQuote, 0) + '\n\n' + SHARE_URL;
+      window.open('sms:?&body=' + encodeURIComponent(text));
     });
 
-    // X with quote
+    // X with quote (~250 chars for text, URL takes ~30 via t.co)
     document.getElementById('hsX').addEventListener('click', () => {
-      const quote = '\u201c' + truncateQuote(selectedQuote, 180) + '\u201d\n\n' + ATTRIBUTION;
-      window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(quote) + '&url=' + encodeURIComponent(SHARE_URL), '_blank');
+      const text = buildShareText(selectedQuote, 250);
+      window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(SHARE_URL), '_blank');
     });
 
-    // Facebook
+    // Facebook (no hard limit for quote param)
     document.getElementById('hsFB').addEventListener('click', () => {
-      const quote = buildQuoteText(truncateQuote(selectedQuote, 300));
-      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL) + '&quote=' + encodeURIComponent(quote), '_blank');
+      const text = buildShareText(selectedQuote, 0);
+      window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL) + '&quote=' + encodeURIComponent(text), '_blank');
     });
 
-    // Instagram Stories
+    // Instagram Stories (no limit — clipboard)
     document.getElementById('hsIG').addEventListener('click', () => {
-      const quote = buildQuoteText(selectedQuote);
-      navigator.clipboard.writeText(quote + '\n\n' + SHARE_URL).then(() => {
+      const text = buildShareText(selectedQuote, 0) + '\n\n' + SHARE_URL;
+      navigator.clipboard.writeText(text).then(() => {
         window.open('https://www.instagram.com/create/story/', '_blank');
         hsCopiedMsg.textContent = 'Quote + link copied! Paste in your Story.';
         hsCopiedMsg.classList.add('show');
