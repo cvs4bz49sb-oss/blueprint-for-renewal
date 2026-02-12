@@ -756,6 +756,11 @@
       display: flex;
     }
 
+    .highlight-share * {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
     .highlight-share::after {
       content: '';
       position: absolute;
@@ -819,6 +824,20 @@
 
     .hs-copied.show {
       opacity: 1;
+    }
+
+    @media (max-width: 960px) {
+      .highlight-share {
+        padding: 0.4rem 0.35rem;
+      }
+      .hs-btn {
+        width: 40px;
+        height: 40px;
+      }
+      .hs-btn svg {
+        width: 18px;
+        height: 18px;
+      }
     }
 
     body.print-mode .highlight-share {
@@ -1258,9 +1277,12 @@
 
     function positionTooltip(range) {
       const rect = range.getBoundingClientRect();
+      const tooltipWidth = hsTooltip.offsetWidth || 200;
       const x = rect.left + rect.width / 2;
       const y = rect.top + window.scrollY - 10;
-      hsTooltip.style.left = Math.max(30, Math.min(x, window.innerWidth - 30)) + 'px';
+      // Clamp so tooltip doesn't overflow viewport edges
+      const clampedX = Math.max(tooltipWidth / 2 + 8, Math.min(x, window.innerWidth - tooltipWidth / 2 - 8));
+      hsTooltip.style.left = clampedX + 'px';
       hsTooltip.style.top = y + 'px';
     }
 
@@ -1269,25 +1291,36 @@
       selectedQuote = '';
     }
 
+    function checkSelection() {
+      const sel = window.getSelection();
+      const text = sel ? sel.toString().trim() : '';
+      if (text.length > 3 && sel.rangeCount > 0 && document.querySelector('.main-content').contains(sel.anchorNode)) {
+        selectedQuote = text;
+        positionTooltip(sel.getRangeAt(0));
+        hsTooltip.classList.add('visible');
+      } else {
+        hideTooltip();
+      }
+    }
+
+    // Desktop: mouseup
     document.addEventListener('mouseup', (e) => {
       if (hsTooltip.contains(e.target)) return;
-      setTimeout(() => {
-        const sel = window.getSelection();
-        const text = sel ? sel.toString().trim() : '';
-        if (text.length > 3 && document.querySelector('.main-content').contains(sel.anchorNode)) {
-          selectedQuote = text;
-          positionTooltip(sel.getRangeAt(0));
-          hsTooltip.classList.add('visible');
-        } else {
-          hideTooltip();
-        }
-      }, 10);
+      setTimeout(checkSelection, 10);
     });
 
     document.addEventListener('mousedown', (e) => {
       if (!hsTooltip.contains(e.target)) {
         hideTooltip();
       }
+    });
+
+    // Mobile: selectionchange fires as the user adjusts selection handles
+    let selectionChangeTimer = null;
+    document.addEventListener('selectionchange', () => {
+      if (!('ontouchstart' in window)) return; // only run on touch devices
+      clearTimeout(selectionChangeTimer);
+      selectionChangeTimer = setTimeout(checkSelection, 300);
     });
 
     // Copy quote + link
