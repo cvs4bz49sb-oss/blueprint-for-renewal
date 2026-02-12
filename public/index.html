@@ -141,12 +141,121 @@
       flex: 1;
     }
 
-    .sidebar .download-btn {
+    .sidebar-actions {
       margin-top: auto;
-      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-bottom: 1rem;
+    }
+
+    .sidebar-actions .download-btn {
       text-align: center;
       justify-content: center;
       width: 100%;
+    }
+
+    /* ===== Share Button & Popup ===== */
+    .share-wrapper {
+      position: relative;
+    }
+
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.6rem 1.4rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--body-text);
+      background: transparent;
+      border: 2px solid var(--secondary);
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .share-btn:hover {
+      background-color: var(--secondary);
+      color: var(--page-bg);
+    }
+
+    [data-theme="dark"] .share-btn {
+      border-color: var(--quaternary);
+      color: var(--body-text);
+    }
+
+    [data-theme="dark"] .share-btn:hover {
+      background-color: var(--quaternary);
+      color: #2d2927;
+    }
+
+    .share-popup {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 0.5rem);
+      left: 0;
+      right: 0;
+      background-color: var(--page-bg);
+      border: 1px solid var(--dark-bg);
+      border-radius: 6px;
+      padding: 0.5rem 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      z-index: 60;
+    }
+
+    .share-popup.open {
+      display: block;
+    }
+
+    [data-theme="dark"] .share-popup {
+      border-color: var(--light-text);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .share-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: 100%;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--body-text);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .share-option:hover {
+      background-color: var(--dark-bg);
+    }
+
+    [data-theme="dark"] .share-option:hover {
+      background-color: rgba(255,255,255,0.08);
+    }
+
+    .share-option svg {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+    }
+
+    .share-copied {
+      font-size: 0.8rem;
+      color: var(--secondary);
+      text-align: center;
+      padding: 0.25rem 0;
+      display: none;
+    }
+
+    .share-copied.show {
+      display: block;
     }
 
     .toc-title {
@@ -482,6 +591,8 @@
 
     /* ===== PDF / Print Mode ===== */
     body.print-mode .download-btn,
+    body.print-mode .share-wrapper,
+    body.print-mode .sidebar-actions,
     body.print-mode .top-bar,
     body.print-mode .sidebar,
     body.print-mode .sidebar-overlay,
@@ -678,10 +789,41 @@
           <li><a href="#how-politics-work-best" class="toc-sub">How Politics Work Best</a></li>
         </ul>
       </nav>
-      <a href="/api/pdf" class="download-btn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9m0 0L4.5 7.5M8 11l3.5-3.5M2 13h12"/></svg>
-        Download PDF
-      </a>
+      <div class="sidebar-actions">
+        <div class="share-wrapper">
+          <div class="share-popup" id="sharePopup">
+            <button class="share-option" id="copyLink">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Copy link
+            </button>
+            <div class="share-copied" id="copiedMsg">Link copied!</div>
+            <a class="share-option" id="shareSMS" href="#" target="_blank">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Text message
+            </a>
+            <a class="share-option" id="shareX" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Share on X
+            </a>
+            <a class="share-option" id="shareFB" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              Share on Facebook
+            </a>
+            <a class="share-option" id="shareIG" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              Instagram Stories
+            </a>
+          </div>
+          <button class="share-btn" id="shareToggle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+        </div>
+        <a href="/api/pdf" class="download-btn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9m0 0L4.5 7.5M8 11l3.5-3.5M2 13h12"/></svg>
+          Download PDF
+        </a>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -936,6 +1078,59 @@
       if (section.getAttribute('id')) {
         observer.observe(section);
       }
+    });
+
+    // Share functionality
+    const SHARE_URL = window.location.origin + window.location.pathname;
+    const SHARE_TITLE = 'Blueprint for Renewal — Mere Orthodoxy';
+    const SHARE_TEXT = 'Blueprint for Renewal: Protestant Catholicity and Solidarity Conservatism';
+
+    const shareToggle = document.getElementById('shareToggle');
+    const sharePopup = document.getElementById('sharePopup');
+
+    shareToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sharePopup.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!sharePopup.contains(e.target) && e.target !== shareToggle) {
+        sharePopup.classList.remove('open');
+      }
+    });
+
+    // Copy link
+    document.getElementById('copyLink').addEventListener('click', () => {
+      navigator.clipboard.writeText(SHARE_URL).then(() => {
+        const msg = document.getElementById('copiedMsg');
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 2000);
+      });
+    });
+
+    // Text message (sms: on mobile, fallback to sms: anyway)
+    document.getElementById('shareSMS').href =
+      'sms:?&body=' + encodeURIComponent(SHARE_TEXT + ' ' + SHARE_URL);
+
+    // X (Twitter)
+    document.getElementById('shareX').href =
+      'https://x.com/intent/tweet?text=' + encodeURIComponent(SHARE_TEXT) +
+      '&url=' + encodeURIComponent(SHARE_URL);
+
+    // Facebook
+    document.getElementById('shareFB').href =
+      'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL);
+
+    // Instagram Stories (deep link — opens IG app with URL in clipboard)
+    document.getElementById('shareIG').addEventListener('click', (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText(SHARE_URL).then(() => {
+        window.open('https://www.instagram.com/create/story/', '_blank');
+        const msg = document.getElementById('copiedMsg');
+        msg.textContent = 'Link copied! Paste it in your Story.';
+        msg.classList.add('show');
+        setTimeout(() => { msg.classList.remove('show'); msg.textContent = 'Link copied!'; }, 4000);
+      });
     });
   </script>
 </body>
