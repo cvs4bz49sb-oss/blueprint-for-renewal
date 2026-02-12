@@ -435,6 +435,57 @@
       }
     }
 
+    /* ===== Download Button ===== */
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+      padding: 0.6rem 1.4rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--page-bg);
+      background-color: var(--secondary);
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .download-btn:hover {
+      background-color: var(--tertiary);
+    }
+
+    [data-theme="dark"] .download-btn {
+      color: #2d2927;
+      background-color: var(--quaternary);
+    }
+
+    [data-theme="dark"] .download-btn:hover {
+      background-color: var(--primary);
+    }
+
+    /* ===== PDF / Print Mode ===== */
+    body.print-mode .download-btn,
+    body.print-mode .top-bar,
+    body.print-mode .sidebar,
+    body.print-mode .sidebar-overlay,
+    body.print-mode .progress-bar,
+    body.print-mode .menu-toggle {
+      display: none !important;
+    }
+
+    body.print-mode .main-content {
+      margin-left: 0;
+      padding: 0;
+      max-width: 100%;
+    }
+
+    body.print-mode .content-container {
+      max-width: 100%;
+    }
+
     /* ===== Scroll Progress ===== */
     .progress-bar {
       position: fixed;
@@ -496,6 +547,10 @@
           <h1 class="hero-title">Blueprint for<br>Renewal</h1>
           <p class="hero-subtitle">Protestant Catholicity and Solidarity Conservatism</p>
           <p class="hero-date">2025</p>
+          <a href="/api/pdf" class="download-btn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9m0 0L4.5 7.5M8 11l3.5-3.5M2 13h12"/></svg>
+            Download PDF
+          </a>
         </div>
 
         <!-- Article Content -->
@@ -666,6 +721,11 @@
 
   <!-- Scripts -->
   <script>
+    // Print mode detection (for PDF generation)
+    if (new URLSearchParams(window.location.search).get('print') === 'true') {
+      document.body.classList.add('print-mode');
+    }
+
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
